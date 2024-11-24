@@ -264,18 +264,18 @@ sudo tail -f /var/log/suricata/fast.log
 
 ## 7. Uwagi
 
-- Po wprowadzeniu powyższych zmian w iptables  połączenie z siecią bez uruchominej Suricaty w trybie NFQUEUE będzie niemożliwe - ruch sieciowy "ginie" w kolejce NFQUEUE
+- Po wprowadzeniu powyższych zmian w iptables  połączenie z siecią bez uruchominej Suricaty w trybie NFQUEUE będzie >niemożliwe - ruch sieciowy "ginie" w kolejce NFQUEUE
 
- - Ulotna konfiguracja iptables. 
-Po restarcie systemu wpisy z iptables zostają usunięte. Zachowaj konfigurację poprzez zainstalowanie  
-`iptables-persistent`  
-lub korzystajac z wbud
-owanych narzędzi - zapis reguł do pliku:
-```bash
-sudo iptables-save > /etc/iptables/my-rules
-```
-wczytanie po uruchomieniu:  
-```bash
-sudo iptables-save < /etc/iptables/my-rules
-```
+ - Ulotna konfiguracja iptables:  
+    Po restarcie systemu wpisy z iptables zostają usunięte. Zachowaj konfigurację poprzez zainstalowani:  
+    `iptables-persistent`  
+    lub korzystajac z wbud
+    owanych narzędzi - zapis reguł do pliku:
+    ```bash
+    sudo iptables-save > /etc/iptables/my-rules
+    ```
+    wczytanie po uruchomieniu:  
+    ```bash
+    sudo iptables-save < /etc/iptables/my-rules
+    ```
 
