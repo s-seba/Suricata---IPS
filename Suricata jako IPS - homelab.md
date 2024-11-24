@@ -34,7 +34,6 @@ Maszyny wirtualne:
 - `alfa`  
 
 Suricata zosatnie zainstalowana na maszynie `omega`, będzie monitorować ruch z `alfa` jak i z `omega`.
-rokach.
 
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
@@ -55,7 +54,7 @@ Dodaj wirtualne interfejsy kart sieciowych:
 
 > **⚠️ Uwaga:** Nazwy interfejsów mogą być inne na Twojej maszynie. Sprawdź je za pomocą:
 > `ip a` 
-> i dostosuj je w dalszych k
+> i dostosuj je w dalszych krokach.
 
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
@@ -66,8 +65,9 @@ Dodaj wirtualne interfejsy kart sieciowych:
 - `ens33: 192.168.0.9/24` - bridge.
 - `ens37: 192.168.1.1/24` - host-only.
 
-#### Plik konfiguracyjny `netplan`:
-Znajduje się w katalogu `/etc/netplan`. Zamień jego zawartość na:
+#### Plik konfiguracyjny `netplan`.
+Zamień zawartość pliku znajdującego się w katalogu `/etc/netplan` na:  
+
 ```yaml
 network:
   version: 2
@@ -91,14 +91,14 @@ network:
 
 Zatwierdź zmiany:
 ```bash
-netplan apply
+sudo netplan apply
 ```
 
 #### Konfiguracja `omega` jako router:
 ```bash
-iptables -t nat -A POSTROUTING -o ens33 -j MASQUERADE
-iptables -A FORWARD -i ens33 -o ens37 -j ACCEPT
-iptables -A FORWARD -i ens37 -o ens33 -j ACCEPT
+sudo iptables -t nat -A POSTROUTING -o ens33 -j MASQUERADE
+sudo iptables -A FORWARD -i ens33 -o ens37 -j ACCEPT
+sudo iptables -A FORWARD -i ens37 -o ens33 -j ACCEPT
 ```
 
 #### [🔝 Powrót do menu głównego](#spis-treści)
@@ -111,8 +111,9 @@ iptables -A FORWARD -i ens37 -o ens33 -j ACCEPT
 - `ens37: 192.168.1.3/24` - host-only.
 - `ens38: 192.168.1.2/24` - host-only.
 
-#### Plik konfiguracyjny interfejsów sieciowych:
-Znajduje się w katalogu `/etc/netplan`. Zamień jego zawartość na:
+#### Plik konfiguracyjny `netplan`.
+Zamień zawartość pliku znajdującego się w katalogu `/etc/netplan` na:  
+
 ```yaml
 network:
   version: 2
@@ -140,7 +141,7 @@ network:
 
 Zatwierdź zmiany:
 ```bash
-netplan apply
+sudo netplan apply
 ```
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
@@ -150,22 +151,22 @@ netplan apply
 #### Przekierowanie portów na `omega`:
 1. **SSH (`port 22` na interfejsie wewnętrznym):**
    ```bash
-   iptables -t nat -A PREROUTING -d 192.168.0.9 -p tcp --dport 22 -j DNAT --to-destination 192.168.1.1:22
+   sudo iptables -t nat -A PREROUTING -d 192.168.0.9 -p tcp --dport 22 -j DNAT --to-destination 192.168.1.1:22
    ```
 
 2. **SSH (`port 2222` na `alfa`):**
    ```bash
-   iptables -t nat -A PREROUTING -d 192.168.0.9 -p tcp --dport 2222 -j DNAT --to-destination 192.168.1.2:22
+   sudo iptables -t nat -A PREROUTING -d 192.168.0.9 -p tcp --dport 2222 -j DNAT --to-destination 192.168.1.2:22
    ```
 
 3. **HTTP (`port 80` na `alfa`):**
    ```bash
-   iptables -t nat -A PREROUTING -d 192.168.0.9 -p tcp --dport 80 -j DNAT --to-destination 192.168.1.2:80
+   sudo iptables -t nat -A PREROUTING -d 192.168.0.9 -p tcp --dport 80 -j DNAT --to-destination 192.168.1.2:80
    ```
 
 #### NAT na `omega`:
    ```bash
-   iptables -t nat -A POSTROUTING -o ens37 -j MASQUERADE
+   sudo iptables -t nat -A POSTROUTING -o ens37 -j MASQUERADE
    ```
 
 #### [🔝 Powrót do menu głównego](#spis-treści)
@@ -176,9 +177,9 @@ netplan apply
 ### 3.1 NFQUEUE
 Przekierowanie ruchu do NFQUEUE:
 ```bash
-iptables -I FORWARD -j NFQUEUE
-iptables -I INPUT -j NFQUEUE
-iptables -I OUTPUT -j NFQUEUE
+sudo iptables -I FORWARD -j NFQUEUE
+sudo iptables -I INPUT -j NFQUEUE
+sudo iptables -I OUTPUT -j NFQUEUE
 ```
 
 ---
@@ -231,12 +232,12 @@ runmode: workers
 
 Sprawdzenie konfiguracji:
 ```bash
-suricata -c /etc/suricata/suricata.yaml -T
+sudo suricata -c /etc/suricata/suricata.yaml -T
 ```
 
 Uruchomienie w trybie IPS:
 ```bash
-suricata -c /etc/suricata/suricata.yaml -q 0
+sudo suricata -c /etc/suricata/suricata.yaml -q 0
 ```
 
 ---
@@ -246,6 +247,9 @@ suricata -c /etc/suricata/suricata.yaml -q 0
 Na maszynie `alfa`:
 ```bash
 ping -I ens38 google.com
+```
+następnie:
+```bash
 curl --interface ens38 https://www.example.com
 ```
 
@@ -266,9 +270,12 @@ sudo tail -f /var/log/suricata/fast.log
 Po restarcie systemu wpisy z iptables zostają usunięte. Zachowaj konfigurację poprzez zainstalowanie  
 `iptables-persistent`  
 lub korzystajac z wbud
-owanych narzędzi - zapis reguł do pliku:  
-`iptables-save > /etc/iptables/my-rules`  
+owanych narzędzi - zapis reguł do pliku:
+```bash
+sudo iptables-save > /etc/iptables/my-rules
+```
 wczytanie po uruchomieniu:  
-`iptables-save < /etc/iptables/my-rules`
-
+```bash
+sudo iptables-save < /etc/iptables/my-rules
+```
 
