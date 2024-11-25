@@ -130,7 +130,6 @@ sudo iptables -A FORWARD -i ens37 -o ens33 -j ACCEPT # przekierowanie ruchu ens3
 
 #### Połączenie sieciowe interfejsów:
 - `ens33: 192.168.0.178/24` - bridge.
-- `ens37: 192.168.1.3/24` - host-only.
 - `ens38: 192.168.1.2/24` - host-only.
 
 #### Plik konfiguracyjny `netplan`.
@@ -155,10 +154,6 @@ network:
       dhcp4: no
       addresses:
         - 192.168.0.178/24
-    ens37:
-      dhcp4: no
-      addresses:
-        - 192.168.1.3/24
 ```
 
 Zatwierdź zmiany:
@@ -192,17 +187,36 @@ sudo netplan apply
    sudo iptables -t nat -A POSTROUTING -o ens37 -j MASQUERADE
    ```
 
+   #### [🔝 Powrót do menu głównego](#spis-treści)
+   ---
+
 ### 2.4 Konfiguracja awaryjnego SSH
 
 W przypadku problemów z konfiguracją zostaniemy bez możliwości korzystania z SSH dlatego wykorzystamy dodatkowe interfejsy, które nie są monitorowane przez Suricatę.
 
 Interfejsy awaryjne `SSH`:
-- `omega`  
-    `192.168.0.99` port `2211`, dodaj linijkę do `/etc/ssh/sshd_config`:   
+- `omega` - `192.168.0.99` port `2211`, dodaj linijkę do `/etc/ssh/sshd_config`:   
+    
     ```bash
+     
     ListenAddress 192.168.0.99:2211
     ```
 
+- `alfa` - `192.168.0.178` port `2211`, dodaj linijkę do `/etc/ssh/sshd_config`:   
+    ```bash
+    ListenAddress 192.168.0.178:2211
+    ```
+Konfiguracja `iptables` - dostęp tylko z określonego adresu:  
+Na obu maszynach konfiguracja `iptables` będzie identyczna, ponieważ łączymy się z tej samej maszyny `192.168.0.227` 
+i SSH jest na tych samych portach.
+
+  ```bash
+  # zaakceptuj połączenie z adresu 192.168.0.227 na port 2211
+  sudo iptables -A INPUT -p tcp --dport 2211 -s 192.168.0.227 -j ACCEPT 
+  # zablokuj wszystkie połączenia na port 2211
+  sudo iptables -A INPUT -p tcp --dport 2211 -j DROP 
+  ```
+  Reguła `ACCEPT` występuje przed regułą `DROP`, a więc połączenie z `192.168.0.227` będzie zaakceptowane, każde inne odrzucone.
 
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
