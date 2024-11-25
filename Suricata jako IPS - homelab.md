@@ -1,6 +1,6 @@
 # Suricata jako IPS - homelab
 
-> Konfiguracja programu Suricata w trybie IPS, wersja: [suricata-7.0.7](https://suricata.io/download/)
+> Konfiguracja programu Suricata w trybie IPS, wersja 7.0.7
 
 Dlaczego Suricata?  
 - to zaawansowany system IDS/IPS który sprawdza się w środowiskach produkcyjnych, jak i testowych
@@ -34,9 +34,9 @@ Dlaczego Suricata?
 Konfiguracja domowego laboratorium i uruchomienie Suricaty jako IPS.
 
 W projekcie zostały wykorzystane:
-- Oprogramowanie do wirtualizacji VMware.
-- Systemy operacyjne Ubuntu Server 24.04.1
-- Suricata 7.0.7
+- Oprogramowanie do wirtualizacji [VMware](https://www.vmware.com/products/desktop-hypervisor/workstation-and-fusion).
+- Systemy operacyjne [Ubuntu Server 24.04.1](https://ubuntu.com/download/server)
+- IDS/IPS [suricata-7.0.7](https://suricata.io/download/)
 
 Komputer-host dla maszyn wirtualnych pracuje w sieci `192.168.0.1/24`.  
 Maszyny wirtualne:
@@ -93,8 +93,8 @@ network:
         - 192.168.0.9/24
       nameservers:
         addresses:
-          - 8.8.8.8
-          - 8.8.4.4
+          - 1.1.1.1
+          - 1.0.0.1
       routes:
         - to: 0.0.0.0/0
           via: 192.168.0.1
@@ -118,9 +118,9 @@ sudo netplan apply
 #### Konfiguracja `omega` jako router:
 
 ```bash
-sudo iptables -t nat -A POSTROUTING -o ens33 -j MASQUERADE # NAT na interfejsie ens33
-sudo iptables -A FORWARD -i ens33 -o ens37 -j ACCEPT # przekierowanie ruchu ens33 -> ens37
-sudo iptables -A FORWARD -i ens37 -o ens33 -j ACCEPT # przekierowanie ruchu ens37 -> ens33
+sudo iptables -t nat -A POSTROUTING -o ens33 -j MASQUERADE  # NAT na interfejsie ens33
+sudo iptables -A FORWARD -i ens33 -o ens37 -j ACCEPT        # przekierowanie ruchu ens33 -> ens37
+sudo iptables -A FORWARD -i ens37 -o ens33 -j ACCEPT        # przekierowanie ruchu ens37 -> ens33
 ```
 
 #### [🔝 Powrót do menu głównego](#spis-treści)
@@ -166,24 +166,29 @@ sudo netplan apply
 
 ### 2.3 Przekierowanie portów
 
-#### Przekierowanie portów na `omega`:
-1. **SSH (`port 22` na interfejsie wewnętrznym `192.168.1.1`):**
+Monitoring ruchu sieciowego i bezpieczeństwo serwera `alfa` wymaga przekierowania portów na serwerze `omega`.
+
+1. SSH (`port 22 omega`)
    ```bash
+   # przekierowanie z portu 22 na interfejsie zewnętrznym na interfejs wewnętrzny
    sudo iptables -t nat -A PREROUTING -d 192.168.0.9 -p tcp --dport 22 -j DNAT --to-destination 192.168.1.1:22
    ```
 
-2. **SSH (`port 2222` na `omega` do `alfa` `port 22`):**
+2. SSH (`port 22 alfa`)
    ```bash
+   # przekierowanie na port 22 do alfa
    sudo iptables -t nat -A PREROUTING -d 192.168.0.9 -p tcp --dport 2222 -j DNAT --to-destination 192.168.1.2:22
    ```
 
-3. **HTTP (`port 80` na `omega` do `port 80` na `alfa`):**
+3. HTTP (`port 80 alfa`)
    ```bash
+   # przekierowanie na port 80 do alpha
    sudo iptables -t nat -A PREROUTING -d 192.168.0.9 -p tcp --dport 80 -j DNAT --to-destination 192.168.1.2:80
    ```
 
-#### NAT na `omega`:
+#### Network Address Translation (NAT):
    ```bash
+   # NAT - zamiana adresów prywatnych na publiczne
    sudo iptables -t nat -A POSTROUTING -o ens37 -j MASQUERADE
    ```
 
@@ -198,7 +203,6 @@ Interfejsy awaryjne `SSH`:
 - `omega` - `192.168.0.99` port `2211`, dodaj linijkę do `/etc/ssh/sshd_config`:   
     
     ```bash
-     
     ListenAddress 192.168.0.99:2211
     ```
 
@@ -218,13 +222,18 @@ i SSH jest na tych samych portach.
   ```
   Reguła `ACCEPT` występuje przed regułą `DROP`, a więc połączenie z `192.168.0.227` będzie zaakceptowane, każde inne odrzucone.
 
+  Po zmianach zrestartuj `SSH` na obu maszynach:
+  ```bash
+  sudo systemctl restart ssh
+  ```
+
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
 
 ## 3. Konfiguracja NFQUEUE i Suricaty
 
 ### 3.1 NFQUEUE
-NFQUEUE to mechanizm umożliwiający  przekierowanie pakietów sieciowych, gdzie mogą zostać poddane analizie i modyfikacji. Suricata w trybie IPS korzysta z NFQUEUE aby przechwytywać ruch w czasie rzeczywistym i podejmować działania, takie jak blokowanie lub modyfikacja pakietów.
+Jest to mechanizm umożliwiający  przekierowanie pakietów sieciowych, gdzie mogą zostać poddane analizie i modyfikacji. Suricata w trybie IPS korzysta z NFQUEUE aby przechwytywać ruch w czasie rzeczywistym i podejmować działania, takie jak blokowanie lub modyfikacja pakietów.
 
 Przekierowanie ruchu do NFQUEUE:
 
@@ -393,7 +402,7 @@ rezultat powinien być podobny do:
     7   364 MASQUERADE  0    --  *      ens37   0.0.0.0/0            0.0.0.0/0
    19  1491 MASQUERADE  0    --  *      ens33   0.0.0.0/0            0.0.0.0/0
 ```
-powinieneś zobaczyć wpisy `MASQUERADE` z `ens33` i `ens37`. Jeżeli wpisu brakuje, wróć do [NAT na `omega`](#nat-na-omega).  
+powinieneś zobaczyć wpisy `MASQUERADE` z `ens33` i `ens37`. Jeżeli wpisu brakuje, wróć do [NAT na `omega`](#network-address-translation-nat).  
 
  
 ### 7.3. Ruch nie trafia do `NFQUEUE`:
