@@ -78,6 +78,7 @@ Dodaj wirtualne interfejsy kart sieciowych:
 #### Połączenie sieciowe interfejsów:
 - `ens33: 192.168.0.9/24` - bridge.
 - `ens37: 192.168.1.1/24` - host-only.
+- `ens38: 192.168.0.99/24` - bridge.
 
 #### Plik konfiguracyjny `netplan`.
 Zamień zawartość pliku znajdującego się w katalogu `/etc/netplan` na:  
@@ -92,15 +93,21 @@ network:
         - 192.168.0.9/24
       nameservers:
         addresses:
-          - 1.0.0.1
-          - 1.0.0.1
+          - 8.8.8.8
+          - 8.8.4.4
       routes:
         - to: 0.0.0.0/0
           via: 192.168.0.1
+
     ens37:
       dhcp4: no
       addresses:
         - 192.168.1.1/24
+
+    ens38:
+      dhcp4: no
+      addresses:
+        - 192.168.0.99/24
 ```
 Zatwierdź zmiany:
 
@@ -187,7 +194,15 @@ sudo netplan apply
 
 ### 2.4 Konfiguracja awaryjnego SSH
 
-W przypadku problemów z konfiguracją zostaniemy bez możliwości korzstania z SSH dlatego wykorzystamy dodatkowe interfejsy, które nie są monitorowane przez Suricatę.
+W przypadku problemów z konfiguracją zostaniemy bez możliwości korzystania z SSH dlatego wykorzystamy dodatkowe interfejsy, które nie są monitorowane przez Suricatę.
+
+Interfejsy awaryjne `SSH`:
+- `omega`  
+    `192.168.0.99` port `2211`, dodaj linijkę do `/etc/ssh/sshd_config`:   
+    ```bash
+    ListenAddress 192.168.0.99:2211
+    ```
+
 
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
