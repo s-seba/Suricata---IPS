@@ -476,12 +476,10 @@ Awaria Suricaty lub problemów z uruchomieniem w trybie IPS, aby zapewnić dost�
 ## 9. Podsumowanie
 
 Maszyna `omega` działa jako router i firewall korzystając z Suricaty w trybie IPS do monitorowania i filtrowania ruchu.  
-`Omega` łączy się z Internetem za pomocą interfjesu `ens33 (192.168.0.0/24)` i przekierowuje ruch do prywatnej sieci `192.168.1.0/24` przez interfejs `ens37`.   
 
-`Alfa` jest maszyną testową z trzema interfejsami:
-- `ens37` i `ens38` w sieci wewnętrznej `192.168.1.0/24`
-- `ens33` w sieci zewnętrznej `192.168.0.0/24`  
+`Omega` łączy się z Internetem za pomocą interfjesu `ens33` `(192.168.0.0/24)` i przekierowuje ruch do prywatnej sieci `192.168.1.0/24` przez interfejs `ens37`. Połączenie awaryjne `SSH` na interfejs `ens38` pozwala zarządzać maszyną w przypadku awarii Suricaty lub błedów w konfiguracji.
 
-[comment]: <> (Interfejs ens33 służy głownie do komunikacji SSH w przypadku problemów.)
+`Alfa` jest maszyną testową z dwoma interfejsami: `ens38` w sieci wewnętrznej `192.168.1.0/24` skąd ruch jest kierowany do `omega` i `ens33` w sieci zewnętrznej `192.168.0.0/24` dzięki któremu mamy połączenia `SSH` tak jak w przypadku `omega`. 
 
-Cały ruch wychodzący z `alfa` i `omega` jest monitorowany przez Suricatę, reguły NAT i iptables na `omega` zapewniają dostęp do Internetu dla maszyn w sieci wewnętrznej.
+Poprawna konfiguracja pozwala przekierować cały ruch z `alfa` i `omega` przez Suricatę, poza awaryjnymi SSH. 
+Reguły NAT i iptables na `omega` zapewniają dostęp do Internetu dla maszyn w sieci wewnętrznej.
