@@ -401,6 +401,7 @@ powinieneś zobaczyć coś podobnego:
 [Drop] [**] [1:3:1] content: ICMP PACKET DETECTED: Echo Request  [**] [Classification: Potential Corporate Privacy Violation] [Priority: 1] {ICMP} 192.168.1.2:8 -> 142.250.75.14:0
 ```
 
+---
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
 
@@ -441,6 +442,7 @@ jeżeli nie ma takiego wpisu, dodaj go:
 sudo iptables -t nat -A POSTROUTING -o ens33 -j MASQUERADE
 ```
 
+---
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
 
@@ -486,7 +488,9 @@ powinieneś zobaczyć wpisy `MASQUERADE` z `ens33` i `ens37`. Jeżeli wpisu brak
   ```
   szukaj wpisów `UFW BLOCK`, jeśli takie są, prawdopodobnie należy poprawić reguły iptables.
 
+---
 #### [🔝 Powrót do menu głównego](#spis-treści)
+---
 
 ### 7.4 Awaria
 
@@ -520,6 +524,8 @@ Awaria Suricaty lub problemów z uruchomieniem w trybie IPS, aby zapewnić dost�
   sudo iptables -t filter -D FORWARD 1  # w tablicy FILTER z łańcucha FORWARD usuń regułę nr 1
   sudo iptables -t filter -D OUTPUT 1   # w tablicy FILTER z łańcucha OUTPUT usuń regułę nr 1
   ```
+
+---
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
 
@@ -544,6 +550,7 @@ Awaria Suricaty lub problemów z uruchomieniem w trybie IPS, aby zapewnić dost�
 
 [comment]: <> (- Narzedzie `systemd` do automatycznego wczytywania reguł przy starcie:)
 
+---
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
 ## 9. Podsumowanie
