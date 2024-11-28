@@ -10,8 +10,8 @@ Dlaczego Suricata?
 ## Spis treści
 - [1. Cele projektu](#1-cele-projektu)
 - [2. Przygotowanie](#2-przygotowanie)
-  - [2.1 Maszyna wirtualna "omega"](#21-maszyna-wirtualna-omega)
-  - [2.2 Maszyna wirtualna "alfa"](#22-maszyna-wirtualna-alfa)
+  - [2.1 Maszyna wirtualna *omega*](#21-maszyna-wirtualna-omega)
+  - [2.2 Maszyna wirtualna *alfa*](#22-maszyna-wirtualna-alfa)
   - [2.3 Przekierowanie portów](#23-przekierowanie-portów)
   - [2.4 Konfiguracja awaryjnego SSH](#24-konfiguracja-awaryjnego-ssh)
 - [3. Konfiguracja NFQUEUE i Suricaty](#3-konfiguracja-nfqueue-i-suricaty)
@@ -21,9 +21,9 @@ Dlaczego Suricata?
 - [5. Uruchomienie](#5-uruchomienie)
 - [6. Weryfikacja](#6-weryfikacja)
 - [7. Co może pójść nie tak](#7-co-może-pójść-nie-tak)
-  - [7.1 Brak dostępu do Internetu - `omega`](#71-brak-dostępu-do-internetu---omega)
-  - [7.2 Brak dostępu do Internetu - `alfa`](#72-brak-dostępu-do-internetu---alfa)
-  - [7.3 Ruch nie trafia do `NFQUEUE`](#73-ruch-nie-trafia-do-nfqueue)
+  - [7.1 Brak dostępu do Internetu - *omega*](#71-brak-dostępu-do-internetu---omega)
+  - [7.2 Brak dostępu do Internetu - *alfa*](#72-brak-dostępu-do-internetu---alfa)
+  - [7.3 Ruch nie trafia do NFQUEUE](#73-ruch-nie-trafia-do-nfqueue)
   - [7.4 Awaria](#74-awaria)
 - [8. Uwagi](#8-uwagi)
 - [9. Podsumowanie](#9-podsumowanie)
@@ -31,54 +31,73 @@ Dlaczego Suricata?
 
 ## 1. Cele projektu
 
-Konfiguracja domowego laboratorium i uruchomienie Suricaty jako IPS.
+Konfiguracja domowego laboratorium z serwerem www oraz oprogramowaniem IPS - Suricata.  
+---
 
 W projekcie zostały wykorzystane:
 - Oprogramowanie do wirtualizacji [VMware](https://www.vmware.com/products/desktop-hypervisor/workstation-and-fusion).
 - Systemy operacyjne [Ubuntu Server 24.04.1](https://ubuntu.com/download/server)
-- IDS/IPS [suricata-7.0.7](https://suricata.io/download/)
+- IDS/IPS [suricata-7.0.7](https://suricata.io/download/)  
+- Ilustracje graficzne przygotowałem w serwisie [diagrams.net](https://app.diagrams.net/)
 
-Komputer-host dla maszyn wirtualnych pracuje w sieci `192.168.0.1/24`.  
-Maszyny wirtualne:
-- `omega`
-- `alfa`  
 
-Na maszynie `alfa` zainstalowany jest serwer http.  
-Suricata zostanie zainstalowana na maszynie `omega`, będzie monitorować ruch z `alfa`jak i z `omega`.
-
+---
 
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
 
-## 2. Przygotowanie
+## 2. Przygotowanie  
 
-[comment]: <> (Dodać diagram)
+### Struktura
 
-W `alfa` i `omega` odszukaj i odkomentowuj linijkę w pliku `/etc/sysctl.conf`:
+Komputer-host dla maszyn wirtualnych pracuje w sieci `192.168.0.1/24`  
+Maszyny wirtualne: `alfa` i `omega`    
+Komunikacja z maszynami wirtualnymi będzie się odbywać z `PC`: `192.168.0.227/24`
+
+---
+
+###  Interfejsy
+
+Dodaj wirtualne interfejsy kart sieciowych:  
+- **VMware**: `VM -> Settings -> Hardware -> Add... -> Network Adapter -> Finish`.  
+  - w opcjach interfejsów:
+     - **Connected**.
+    - **Connect at power on**.  
+  
+
+- **alfa**
+  - `ens33: 192.168.0.178/24` - bridge.
+  - `ens38: 192.168.1.2/24` - host-only.  
+
+- **omega**
+  - `ens33: 192.168.0.9/24` - bridge.
+  - `ens37: 192.168.1.1/24` - host-only.  
+
+- **PC**  
+  - `wlan0: 192.168.0.227/24`
+
+> **⚠️ Uwaga:** Nazwy interfejsów mogą być inne na Twojej maszynie. Sprawdź je za pomocą:
+> `ip a` 
+> i dostosuj je w dalszych krokach.  
+
+![Alt text](./img/1_start.PNG)  
+*Konfiguracja interfejsów sieciowych*
+
+---
+
+W obu maszynach wirtualnych odszukaj i odkomentuj linijkę w pliku `/etc/sysctl.conf`:
 
 ```bash
 net.ipv4.ip_forward=1 # przekazywanie pakietów ipv4
 ```
 
-Dodaj wirtualne interfejsy kart sieciowych:  
-- **VMware**: `VM -> Settings -> Hardware -> Add... -> Network Adapter -> Finish`.  
-- Ustaw w interfejsach opcje:
-  - **Connected**.
-  - **Connect at power on**.  
-  
-> **⚠️ Uwaga:** Nazwy interfejsów mogą być inne na Twojej maszynie. Sprawdź je za pomocą:
-> `ip a` 
-> i dostosuj je w dalszych krokach.
-
+---
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
 
-### 2.1 Maszyna wirtualna "omega"
+### 2.1 Maszyna wirtualna ***omega***
 
-#### Połączenie sieciowe interfejsów:
-- `ens33: 192.168.0.9/24` - bridge.
-- `ens37: 192.168.1.1/24` - host-only.
-- `ens38: 192.168.0.99/24` - bridge.
+
 
 #### Plik konfiguracyjny `netplan`.
 Zamień zawartość pliku znajdującego się w katalogu `/etc/netplan` na:  
@@ -104,10 +123,6 @@ network:
       addresses:
         - 192.168.1.1/24
 
-    ens38:
-      dhcp4: no
-      addresses:
-        - 192.168.0.99/24
 ```
 Zatwierdź zmiany:
 
@@ -115,7 +130,7 @@ Zatwierdź zmiany:
 sudo netplan apply
 ```
 
-#### Konfiguracja `omega` jako router:
+#### Konfiguracja `omega` jako router dla `192.168.1.1`:
 
 ```bash
 sudo iptables -t nat -A POSTROUTING -o ens33 -j MASQUERADE  # NAT na interfejsie ens33
@@ -123,14 +138,17 @@ sudo iptables -A FORWARD -i ens33 -o ens37 -j ACCEPT        # przekierowanie ruc
 sudo iptables -A FORWARD -i ens37 -o ens33 -j ACCEPT        # przekierowanie ruchu ens37 -> ens33
 ```
 
+![Alt text](./img/2_omega.PNG)   
+*Przekierowanie pakietów i NAT dla interfejsu ens33*
+
+---
+
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
 
-### 2.2 Maszyna wirtualna "alfa"
+### 2.2 Maszyna wirtualna ***alfa***
 
-#### Połączenie sieciowe interfejsów:
-- `ens33: 192.168.0.178/24` - bridge.
-- `ens38: 192.168.1.2/24` - host-only.
+
 
 #### Plik konfiguracyjny `netplan`.
 Zamień zawartość pliku znajdującego się w katalogu `/etc/netplan` na:  
@@ -161,12 +179,13 @@ Zatwierdź zmiany:
 sudo netplan apply
 ```
 
+---
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
 
 ### 2.3 Przekierowanie portów
 
-Monitoring ruchu sieciowego i bezpieczeństwo serwera `alfa` wymaga przekierowania portów na serwerze `omega`.
+Monitoring ruchu sieciowego i odseparowanie serwera `alfa` wymaga przekierowania portów na serwerze `omega`.
 
 1. SSH (`port 22 omega`)
    ```bash
@@ -191,58 +210,90 @@ Monitoring ruchu sieciowego i bezpieczeństwo serwera `alfa` wymaga przekierowan
    # NAT - zamiana adresów prywatnych na publiczne
    sudo iptables -t nat -A POSTROUTING -o ens37 -j MASQUERADE
    ```
+![Alt text](./img/3_omega-alfa.PNG)  
+*Przekierwanie portów i NAT dla interfejsu ens37*
 
-   #### [🔝 Powrót do menu głównego](#spis-treści)
-   ---
+---
+#### [🔝 Powrót do menu głównego](#spis-treści)
+---
 
 ### 2.4 Konfiguracja awaryjnego SSH
 
-W przypadku problemów z konfiguracją zostaniemy bez możliwości korzystania z SSH dlatego wykorzystamy dodatkowe interfejsy, które nie są monitorowane przez Suricatę.
+W przypadku problemów z konfiguracją Suricaty lub iptables zostaniemy bez możliwości zdalengo połącznia z serwerem, dlatego utworzymy na obu obu maszynach możliowść awaryjnego połączenia. Wykorzystamy do tego istniejące interfejsy:
 
-Interfejsy awaryjne `SSH`:
-- `omega` - `192.168.0.99` port `2211`, dodaj linijkę do `/etc/ssh/sshd_config`:   
+- `omega`- interfejs:  `192.168.0.9` port `2211`, dodaj linijkę do `/etc/ssh/sshd_config`:   
     
     ```bash
-    ListenAddress 192.168.0.99:2211
+    ListenAddress 192.168.0.9:2211
     ```
+**⚠️ Uwaga:** Do konfiguracji `iptables` na maszynie `omega` wrócimy w następnej sekcji.  
 
-- `alfa` - `192.168.0.178` port `2211`, dodaj linijkę do `/etc/ssh/sshd_config`:   
+
+- `alfa`- interfejs `192.168.0.178` port `2211`, dodaj linijkę do `/etc/ssh/sshd_config`:   
     ```bash
     ListenAddress 192.168.0.178:2211
     ```
-Konfiguracja `iptables` - dostęp tylko z określonego adresu:  
-Na obu maszynach konfiguracja `iptables` będzie identyczna, ponieważ łączymy się z tej samej maszyny `192.168.0.227` 
-i SSH jest na tych samych portach.
-
+     Wpis do `iptables`:
   ```bash
-  # zaakceptuj połączenie z adresu 192.168.0.227 na port 2211
-  sudo iptables -A INPUT -p tcp --dport 2211 -s 192.168.0.227 -j ACCEPT 
-  # zablokuj wszystkie połączenia na port 2211
+  # zaakceptuj połączenie SSH z adresu 192.168.0.227 na port 2211
+  sudo iptables -I INPUT -i ens33 -d 192.168.0.178  -p tcp --dport 2211 -s 192.168.0.227 -j ACCEPT 
+  # odrzuć połączenie z innych adresów
   sudo iptables -A INPUT -p tcp --dport 2211 -j DROP 
   ```
-  Reguła `ACCEPT` występuje przed regułą `DROP`, a więc połączenie z `192.168.0.227` będzie zaakceptowane, każde inne odrzucone.
 
-  Po zmianach zrestartuj `SSH` na obu maszynach:
-  ```bash
-  sudo systemctl restart ssh
-  ```
+  ![Alt text](./img/4_alfa-ssh.PNG)  
+*Awaryjne SSH do serwera alfa*
+---
 
+Po zmianach zrestartuj `SSH` na obu maszynach:
+```bash
+sudo systemctl restart ssh
+```
+
+---
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
 
 ## 3. Konfiguracja NFQUEUE i Suricaty
 
 ### 3.1 NFQUEUE
-Jest to mechanizm umożliwiający  przekierowanie pakietów sieciowych, gdzie mogą zostać poddane analizie i modyfikacji. Suricata w trybie IPS korzysta z NFQUEUE aby przechwytywać ruch w czasie rzeczywistym i podejmować działania, takie jak blokowanie lub modyfikacja pakietów.
+Jest to mechanizm umożliwiający  przekierowanie pakietów sieciowych do kolejki, gdzie mogą zostać poddane analizie i modyfikacji. Suricata w trybie IPS korzysta z NFQUEUE aby przechwytywać ruch w czasie rzeczywistym i podejmować działania, takie jak blokowanie lub modyfikacja pakietów.
 
 Przekierowanie ruchu do NFQUEUE:
 
 ```bash
-sudo iptables -I FORWARD -j NFQUEUE  # przekaż ruch przechodzący prez omega do NFQUEUE
+sudo iptables -I FORWARD -j NFQUEUE  # przekaż ruch nie przeznaczony dla omega do NFQUEUE
 sudo iptables -I INPUT -j NFQUEUE    # przekaż ruch przeznaczony do omega do NFQUEUE
 sudo iptables -I OUTPUT -j NFQUEUE   # przekaż ruch wychodzący z omega do NFQUEUE
 ```
 
+  ![Alt text](./img/5_NFQUEUE.PNG)  
+*Przekierowanie ruchu do kolejki NFQUEUE*
+
+Po tych operacjach `omega` zostaniee odcięta od sieci: pakiety przeznaczone dla `omega` utkną w kolejce *NFQUEUE INPUT*, pakiety wychodzące z `omega` utkną w kolejce *NFQUEUE OUTPUT*, pakiety przeznaczone do bezpośredniego przekazania na drugi interfejs utkną w kolejce *NFQUEUE FORWARD*.
+Odbiorem i przekazywaniem ruchu z NFQUEUE zajmie się w kolejnym rozdziale Suricata.
+
+---
+
+#### Awaryjne SSH na *omega*
+W tym miesjcu musimy powrócić do konfiguracji SSH na maszynie `omega`: cały ruch jest przekierowany do kolejki NFQUEUE, a więc i awaryjne SSH. Aby uzyskać do niego dostęp niezależny od NFQUEUE i Suricaty wprowadzimy dodatkowe reguły do iptables.  
+Opcja `-I` oznacza " wstaw regułę na początku, a więc poniższe reguły będą miały wyższy priorytet od reguł NFQUEUE więc ruch zostanie przekazany bezpośrednio do SSH.   
+Najpierw zablokujemy cały ruch do SSH z portu `2211`, następnie pozolimy na ruch tylko z PC (`192.168.0.227`).
+  ```bash
+  # zablokuj wszystkie połączenia tcp na port 2211
+  sudo iptables -I INPUT -p tcp --dport 2211 -j DROP 
+  # zaakceptuj połączenie tcp z adresu 192.168.0.227 na port 2211
+  sudo iptables -I INPUT -i ens38 -d 192.168.0.99  -p tcp --dport 2211 -s 192.168.0.227 -j ACCEPT 
+  ```
+
+  ![Alt text](./img/6_ssh_sos.PNG)  
+ *Awaryjne połączenie omega z PC.*
+
+ ---
+
+
+
+#### [🔝 Powrót do menu głównego](#spis-treści)
 ---
 
 ### 3.2 Suricata 
@@ -264,6 +315,10 @@ nfq:
 runmode: workers
 ```
 
+ ![Alt text](./img/7_suricata.PNG)  
+ *Interakcja Suriacty z NFQUEUE*
+
+---
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
 
@@ -290,6 +345,7 @@ runmode: workers
 - w pliku konfiguracyjnym `/etc/suricata/suricata.yaml` odnajdź linijkę:  
 `rule-files:` i dodaj plik `my.rules`.
 
+---
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
 
@@ -313,6 +369,10 @@ sudo suricata -c /etc/suricata/suricata.yaml -q 0
 `0` numer kolejki nfqueue w iptables (domyślnie: `0`)  
 
 ---
+
+ ![Alt text](./img/8_end.PNG)
+
+ >Dodać opis działania
 
 ## 6. Weryfikacja
 
@@ -407,6 +467,8 @@ powinieneś zobaczyć wpisy `MASQUERADE` z `ens33` i `ens37`. Jeżeli wpisu brak
  
 ### 7.3. Ruch nie trafia do `NFQUEUE`:
 
+*omega* - wyświetl wpisy z iptables zawierające frazę "nfq":
+
    ```bash
    sudo iptables -vnL | grep -i "nfq"
    ```
@@ -466,7 +528,7 @@ Awaria Suricaty lub problemów z uruchomieniem w trybie IPS, aby zapewnić dost�
 - Po przekierowaniu ruchu do `NFQUEUE` połączenie z siecią bez uruchominej Suricaty w trybie `NFQUEUE` będzie niemożliwe - ruch sieciowy "utknie" w kolejce `NFQUEUE`.
 
 - Ulotna konfiguracja iptables:  
-    Po restarcie systemu wpisy z iptables zostają usunięte. Zachowaj konfigurację poprzez zainstalowani:  
+    Po restarcie systemu wpisy z iptables zostają usunięte. Zachowaj konfigurację instalując:  
     `iptables-persistent`  
     lub korzystajac z wbudowanych narzędzi - zapis reguł do pliku:
     ```bash
@@ -478,17 +540,17 @@ Awaria Suricaty lub problemów z uruchomieniem w trybie IPS, aby zapewnić dost�
     ```
 - [Przekazywanie pakietów między interfejsami](#konfiguracja-omega-jako-router) nie jest wymagane do pracy Suricaty w trybie `NFQUEUE`, są przydatne do pracy systemu w razie awarii Suricaty.
 
+- [Usunięcie wpisów](#74-awaria) z NFQUEUE oznacza brak monitorowania ruchu przez Suricatę
+
 [comment]: <> (- Narzedzie `systemd` do automatycznego wczytywania reguł przy starcie:)
 
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
 ## 9. Podsumowanie
 
-Maszyna `omega` działa jako router i firewall korzystając z Suricaty w trybie IPS do monitorowania i filtrowania ruchu.  
-
-`Omega` łączy się z Internetem za pomocą interfjesu `ens33` `(192.168.0.0/24)` i przekierowuje ruch do prywatnej sieci `192.168.1.0/24` przez interfejs `ens37`. Połączenie awaryjne `SSH` na interfejs `ens38` pozwala zarządzać maszyną w przypadku awarii Suricaty lub błedów w konfiguracji.
+Maszyna `omega` działa jako router i firewall korzystając z Suricaty w trybie IPS do monitorowania i filtrowania ruchu. Łączy się ona z Internetem za pomocą interfjesu `ens33` `(192.168.0.0/24)` i przekierowuje ruch do prywatnej sieci `192.168.1.0/24` przez interfejs `ens37` *( Sprawdzian: czy On wiedział? T/N )* Połączenie awaryjne `SSH` na interfejs `ens38` pozwala zarządzać maszyną w przypadku awarii Suricaty lub błedów w konfiguracji.
 
 `Alfa` jest maszyną testową z dwoma interfejsami: `ens38` w sieci wewnętrznej `192.168.1.0/24` skąd ruch jest kierowany do `omega` i `ens33` w sieci zewnętrznej `192.168.0.0/24` dzięki któremu mamy połączenia `SSH` tak jak w przypadku `omega`. 
 
-Poprawna konfiguracja pozwala przekierować cały ruch z `alfa` i `omega` przez Suricatę, poza awaryjnymi SSH. 
+Poprawna konfiguracja pozwala przekierować cały ruch z maszyn wirtualnych przez Suricatę, poza awaryjnymi SSH. 
 Reguły NAT i iptables na `omega` zapewniają dostęp do Internetu dla maszyn w sieci wewnętrznej.
