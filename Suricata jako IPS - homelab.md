@@ -30,8 +30,14 @@ Dlaczego Suricata?
 ---
 
 ## 1. Cele projektu
+ Konfiguracja domowego laboratorium z serwerem www oraz oprogramowaniem IPS - Suricata.  
 
-Konfiguracja domowego laboratorium z serwerem www oraz oprogramowaniem IPS - Suricata.  
+![Alt text](./img/0_.PNG)   
+*Schemat*
+
+Zarys działania systemu
+
+
 ---
 
 W projekcie zostały wykorzystane:
@@ -39,6 +45,8 @@ W projekcie zostały wykorzystane:
 - Systemy operacyjne [Ubuntu Server 24.04.1](https://ubuntu.com/download/server)
 - IDS/IPS [suricata-7.0.7](https://suricata.io/download/)  
 - Ilustracje graficzne przygotowałem w serwisie [diagrams.net](https://app.diagrams.net/)
+
+ 
 
 
 ---
@@ -53,6 +61,10 @@ W projekcie zostały wykorzystane:
 Komputer-host dla maszyn wirtualnych pracuje w sieci `192.168.0.1/24`  
 Maszyny wirtualne: `alfa` i `omega`    
 Komunikacja z maszynami wirtualnymi będzie się odbywać z `PC`: `192.168.0.227/24`
+
+
+![Alt text](./img/1_start.PNG)  
+*Konfiguracja interfejsów sieciowych*
 
 ---
 
@@ -80,8 +92,6 @@ Dodaj wirtualne interfejsy kart sieciowych:
 > `ip a` 
 > i dostosuj je w dalszych krokach.  
 
-![Alt text](./img/1_start.PNG)  
-*Konfiguracja interfejsów sieciowych*
 
 ---
 
