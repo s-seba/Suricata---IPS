@@ -2,7 +2,7 @@
 
 > Konfiguracja programu *Suricata*  w trybie IPS, wersja 7.0.7
 
-Dlaczego*Suricata* ?  
+Dlaczego *Suricata* ?  
 - to zaawansowany system IDS/IPS który sprawdza się w środowiskach produkcyjnych, jak i testowych
 - możliwość pracy jako IPS - czyli blokowanie ruchu sieciowego  
 - jest to projekt open-source ze wsparciem społeczności i bardzo dobrą [dokumentacją](https://docs.suricata.io/en/suricata-7.0.7/index.html)
@@ -565,9 +565,16 @@ Poniżej na schemacie interakcja *Suricata* wewnątrz serwera ***omega*** z każ
 
 ## 6. Reguły
 
-Reguły emerging threats - jak zainstalować itd i dlaczego najlepiej tych używać a nie własnych. aktualizacja automatyczna reguł.
+Suricata posiada wbudowane narzędzie do automatycznego pobierania i aktualizacji reguł z [Emerging Threats Open ruleset](https://rules.emergingthreats.net/open/).
+Aby pobrać/zauktualizować reguły:
+```bash
+sudo suricata-update
+```
+zostaną zapisane w `/var/lib/suricata/rules/`.
 
 ### 6.1 Własne reguły dla *Suricata* :
+
+Aby przetestować naszą konfigurację stworzymy kilka prostych reguł do blokowania i  alertowania. Obszerna dokumentacja reguł *Suricata* dostępną jest [tutaj](https://docs.suricata.io/en/suricata-7.0.7/rules/index.html).
 
 #### 1. Blokowanie `echo request`:  
   ```bash
@@ -608,9 +615,10 @@ Reguły emerging threats - jak zainstalować itd i dlaczego najlepiej tych używ
 
 - zapisz powyższe reguły do pliku `/var/lib/suricata/rules/my.rules`
 - w pliku konfiguracyjnym `/etc/suricata/suricata.yaml` odnajdź linijkę:  
-`rule-files:` i dodaj plik `my.rules`.
+`rule-files:` i dodaj plik `my.rules`, tak jak na poniższym zrzucie.
 
-# dodać zdjęcie yaml
+    ![Alt text](./img/screenshot_rules/rule-files.PNG)  
+    *Edycja pliku suricata.yaml*
 
 ---
 #### [🔝 Powrót do menu głównego](#spis-treści)
@@ -830,8 +838,10 @@ Zamykanie połączeń *SSH* na portach `22` i `2222` w przypadku zatrzymania *Su
 ## 10. Uwagi
 
 - **mechanizm *NFQUEUE***  
-po przekierowaniu ruchu do *NFQUEUE* połączenie z siecią bez uruchominej *Suricata* w trybie
-*NFQUEUE* będzie niemożliwe - ruch sieciowy "utknie" w kolejce *NFQUEUE*. Także ruch *SSH*,     jeżeli nie skonfigurowałeś "awaryjnego ssh".
+  - po przekierowaniu ruchu do *NFQUEUE* połączenie z siecią bez uruchominej *Suricata* w trybie
+*NFQUEUE* będzie niemożliwe - ruch sieciowy "utknie" w kolejce *NFQUEUE*. Także ruch *SSH*,     jeżeli nie skonfigurowałeś "awaryjnego ssh".  
+
+  - [**Usunięcie wpisów**](#84-awaria) **z *NFQUEUE*** oznacza brak monitorowania ruchu przez *Suricata* 
 
 - **Ulotna konfiguracja iptables**  
   Po restarcie systemu wpisy z iptables zostają usunięte. Zachowaj konfigurację instalując:  
@@ -853,15 +863,10 @@ po przekierowaniu ruchu do *NFQUEUE* połączenie z siecią bez uruchominej *Sur
   ```
 - [**Przekazywanie pakietów między interfejsami**](#konfiguracja-omega-jako-router) nie jest wymagane do pracy *Suricata* w trybie *NFQUEUE*, są przydatne do pracy systemu w razie awarii *Suricata* .
 
-- [**Usunięcie wpisów**](#84-awaria) **z *NFQUEUE*** oznacza brak monitorowania ruchu przez *Suricata* 
-
- - Dodanie kolejnych urządzeń do monitoringu - urządzenie z bramą domyślną na `192.168.1.0/24` będzie monitorowane przez *Suricata*   
+- Dodanie kolejnych urządzeń do monitoringu - urządzenie z bramą domyślną na `192.168.1.0/24` będzie monitorowane przez *Suricata*  
 
 [comment]: <> (- Narzedzie `systemd` do automatycznego wczytywania reguł przy starcie:)
 
 ---
 #### [🔝 Powrót do menu głównego](#spis-treści)
 ---
-## 11. Podsumowanie
-
-
